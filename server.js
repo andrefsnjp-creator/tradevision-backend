@@ -190,10 +190,59 @@ function generateIntelligentFallback(videoUrl, videoTitle = '') {
   const isEducational = sessionType === 'educativo';
   const isScalping = sessionType === 'scalping';
   
-  const baseEntry = pairs[0] === 'EURUSD' ? 1.0850 : 
-                   pairs[0] === 'GBPUSD' ? 1.2450 : 148.50;
+  // Definir preços base realistas para diferentes tipos de ativos
+  const mainAsset = assets[0];
+  let baseEntry, pipMultiplier, pointValue;
   
-  const pipMultiplier = pairs[0] === 'USDJPY' ? 0.01 : 0.0001;
+  // FOREX
+  if (mainAsset.includes('USD')) {
+    baseEntry = mainAsset === 'EURUSD' ? 1.0850 : 
+               mainAsset === 'GBPUSD' ? 1.2450 : 
+               mainAsset === 'USDJPY' ? 148.50 : 1.0000;
+    pipMultiplier = mainAsset === 'USDJPY' ? 0.01 : 0.0001;
+    pointValue = 'pips';
+  }
+  // ÍNDICES BRASILEIROS
+  else if (mainAsset.includes('WIN')) {
+    baseEntry = 120000; // WIN em pontos
+    pipMultiplier = 5; // Pontos do índice
+    pointValue = 'pontos';
+  }
+  else if (mainAsset.includes('WDO')) {
+    baseEntry = 5.200; // Dólar futuro
+    pipMultiplier = 0.005;
+    pointValue = 'pontos';
+  }
+  // AÇÕES BRASILEIRAS
+  else if (mainAsset.includes('VALE3') || mainAsset.includes('PETR4')) {
+    baseEntry = mainAsset.includes('VALE') ? 68.50 : 35.20;
+    pipMultiplier = 0.01;
+    pointValue = 'centavos';
+  }
+  // AÇÕES AMERICANAS
+  else if (mainAsset.includes('AAPL') || mainAsset.includes('TSLA')) {
+    baseEntry = mainAsset.includes('AAPL') ? 175.50 : 220.80;
+    pipMultiplier = 0.01;
+    pointValue = 'cents';
+  }
+  // CRIPTOMOEDAS
+  else if (mainAsset.includes('BTC')) {
+    baseEntry = 43500;
+    pipMultiplier = 10;
+    pointValue = 'dollars';
+  }
+  // COMMODITIES
+  else if (mainAsset.includes('Gold')) {
+    baseEntry = 2020.50;
+    pipMultiplier = 0.10;
+    pointValue = 'dollars';
+  }
+  // DEFAULT
+  else {
+    baseEntry = 100.00;
+    pipMultiplier = 0.01;
+    pointValue = 'pontos';
+  }
   
   return {
     summary: {
@@ -202,32 +251,42 @@ function generateIntelligentFallback(videoUrl, videoTitle = '') {
       totalPips: isScalping ? Math.floor(Math.random() * 30) + 10 : Math.floor(Math.random() * 80) + 20,
       biggestWin: isScalping ? 15 : 40,
       biggestLoss: isScalping ? -8 : -15,
-      tradingPlatform: "MetaTrader 4",
-      mainPairs: pairs,
+      tradingPlatform: mainAsset.includes('WIN') || mainAsset.includes('WDO') ? 'Profit/MetaTrader' : 
+                      mainAsset.includes('BTC') ? 'Binance/Bybit' : 'MetaTrader 4',
+      mainAssets: assets, // Mudou de mainPairs para mainAssets
       videoAnalyzed: videoTitle || "Vídeo analisado",
-      sessionType: sessionType
+      sessionType: sessionType,
+      assetType: mainAsset.includes('USD') ? 'Forex' :
+                mainAsset.includes('WIN') ? 'Índices BR' :
+                mainAsset.includes('BTC') ? 'Crypto' :
+                mainAsset.includes('AAPL') ? 'Stocks US' :
+                mainAsset.includes('VALE') ? 'Ações BR' : 'Diversos'
     },
     trades: [
       {
         id: 1,
         timestamp: "02:15",
-        pair: pairs[0],
+        asset: assets[0], // Mudou de pair para asset
         type: Math.random() > 0.5 ? "LONG" : "SHORT",
         entry: baseEntry,
         exit: baseEntry + (Math.random() > 0.3 ? 25 : -10) * pipMultiplier,
-        pips: Math.random() > 0.3 ? 25 : -10,
+        points: Math.random() > 0.3 ? 25 : -10, // Mudou de pips para points (mais genérico)
+        pointType: pointValue, // Tipo da unidade (pips, pontos, centavos, etc)
         justification: isEducational ? 
-          "Exemplo didático de rompimento de resistência com confirmação" :
-          "Rompimento da resistência chave com volume confirmando o movimento",
+          `Exemplo didático usando ${assets[0]} - rompimento com confirmação` :
+          `Rompimento da resistência chave em ${assets[0]} com volume confirmando`,
         result: Math.random() > 0.3 ? "WIN" : "LOSS",
         setupType: "breakout"
       }
     ],
     videoInsights: [
-      `Análise específica do vídeo: ${sessionType} identificado`,
-      `Foco principal: ${pairs.join(' e ')}`,
+      `Análise específica: ${sessionType} em ${assets[0]}`,
+      `Mercado: ${assets.length > 1 ? 'Multi-ativos' : assets[0]}`,
       isEducational ? "Conteúdo educativo com explicações detalhadas" : 
-                     "Operações práticas com execução em tempo real"
+                     "Operações práticas com execução em tempo real",
+      `Tipo de ativo: ${mainAsset.includes('WIN') ? 'Índices Brasileiros' :
+                       mainAsset.includes('BTC') ? 'Criptomoedas' :
+                       mainAsset.includes('USD') ? 'Forex' : 'Mercado de Ações'}`
     ],
     riskManagement: {
       stopLossUsed: true,
