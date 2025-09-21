@@ -315,6 +315,37 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Test Gemini connection
+app.get('/test-gemini', async (req, res) => {
+  try {
+    if (!process.env.GEMINI_API_KEY) {
+      return res.json({
+        status: 'ERROR',
+        gemini_connected: false,
+        error: 'GEMINI_API_KEY not configured'
+      });
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const result = await model.generateContent('Hello, test connection');
+    
+    res.json({
+      status: 'OK',
+      gemini_connected: true,
+      response: result.response.text(),
+      quota: '15 requests per minute',
+      cost: 'FREE'
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR', 
+      gemini_connected: false,
+      error: error.message
+    });
+  }
+});
+
 // Endpoint principal - Análise YouTube com IA REAL
 app.post('/analyze-youtube-free', async (req, res) => {
   try {
